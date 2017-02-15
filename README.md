@@ -1,2 +1,3 @@
 # CChat
-A command-line chat client and server.
+A chat client and server in command line.
+
