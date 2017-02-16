@@ -33,6 +33,7 @@
 #define TCP_LISTEN_LENGTH 20
 
 #define RESP0001 "CCRP0001"
+#define RESP0002 "CCRP0002"
 
 #define TRUE  1
 #define FALSE 0

@@ -58,68 +58,78 @@ void* clientHandler(void *p)
 {
     cclog(DEBUG, "thread is running!\n");
 
-    int ret = 0; 
-    Client* cli = (Client *)p;
+    int ret = 0, used = FALSE; 
+    Client *cli = (Client *)p, *pc = NULL, *tc = NULL;
 
-    char* sendBuf = malloc(TCP_BUF_SIZE);
-    char* recvBuf = malloc(TCP_BUF_SIZE);
+    char *sendBuf = malloc(TCP_BUF_SIZE);
+    char *recvBuf = malloc(TCP_BUF_SIZE);
 
     // Get client name.
-    //if (recvMsg(cli->sock, recvBuf, TCP_BUF_SIZE) == 0) {
-        memcpy(cli->name, "hahaha", 8);
-        cclog(NORMAL, "client [%s] joined!\n", cli->name);
-
-        ret = addClient(cli);
-        if (ret) {
-            cclog(ERROR, "addClient failed, ret=%d\n", ret);
-            close(cli->sock);
-            free(sendBuf);
-            free(recvBuf);
-            free(cli);
-            pthread_exit(NULL);
-            return NULL;
-        }
-
-        fprintf(stdout, "Client [%s] entered [%d / %d].\n", 
-                    cli->name,
-                    clientNum(),
-                    MAX_CLIENT_NUM);
-
-    //}
-
-    while(isRunning) {
-        ret = recvMsg(cli->sock, recvBuf, TCP_BUF_SIZE);
-        if (ret == 0) {
-            memset(sendBuf, 0, TCP_BUF_SIZE);
-            sprintf(sendBuf, "%s:%s", cli->name, recvBuf);
-            Client *tc = NULL;
-            for (int i = 0; i < clientNum(); i++) {
-                tc = (Client *)getClient(i);
-                if (tc) {
-                    ret = sendMsg(tc->sock, sendBuf, strlen(sendBuf));
-                    if (ret) {
-                        cclog(ERROR, "sendBuf to sock [%d] error\n", tc->sock);
-                        continue;
-                    }
-                }
+    while ((ret = recvMsg(cli->sock, recvBuf, TCP_BUF_SIZE)) == 0 && isRunning) {
+        used = FALSE;
+        for (int i = 0; i < clients.size; i++) {
+            pc = (Client *)listGet(&clients, i);
+            if (memcmp(pc->name, recvBuf, strlen(recvBuf)) == 0) {
+                used = TRUE;
+                break;
             }
-        } else if (ret == -1) {
-            cclog(ERROR, "recvMsg error, ret=[%d]\n", ret);
-            break;
-        } else if (ret == -2) {
-            cclog(ERROR, "recvMsg error, ret=[%d]\n", ret);
-            break;
         }
 
-        memset(sendBuf, 0, TCP_BUF_SIZE);
-        memset(recvBuf, 0, TCP_BUF_SIZE);
-    }
+        if (used == FALSE) {
+            if ((ret = sendMsg(cli->sock, "DONE", 4)) == 0) {
+                strcpy(cli->name, recvBuf);
+                cclog(NORMAL, "client [%s] joined!\n", cli->name);
+
+                if ((ret = addClient(cli)) == 0) {
+                    fprintf(stdout, "Client [%s] entered [%d / %d].\n", cli->name, clientNum(), MAX_CLIENT_NUM);
+
+                    while(isRunning) {
+                        if ((ret = recvMsg(cli->sock, recvBuf, TCP_BUF_SIZE)) == 0) {
+                            memset(sendBuf, 0, TCP_BUF_SIZE);
+                            sprintf(sendBuf, "%s:%s", cli->name, recvBuf);
+                            for (int i = 0; i < clientNum(); i++) {
+                                if ((tc = (Client *)getClient(i))) {
+                                    if ((ret = sendMsg(tc->sock, sendBuf, strlen(sendBuf)))) {
+                                        cclog(ERROR, "sendBuf to sock [%d] error\n", tc->sock);
+                                        continue;
+                                    }
+                                }
+                            }
+                        } else if (ret == -1) {
+                            cclog(ERROR, "recvMsg error, ret=[%d]\n", ret);
+                            break;
+                        } else if (ret == -2) {
+                            cclog(ERROR, "recvMsg error, ret=[%d]\n", ret);
+                            break;
+                        }
+
+                        memset(sendBuf, 0, TCP_BUF_SIZE);
+                        memset(recvBuf, 0, TCP_BUF_SIZE);
+                    }
+
+                    removeClient(cli);                 
+                } else {
+                    cclog(ERROR, "addClient error\n");
+                }             
+            } else {
+                cclog(ERROR, "sendMsg error.\n");
+            }
+
+            break;
+        } else {
+            cclog(NORMAL, "Client name [%s] is already be used!\n", cli->name);
+
+            if ((ret = sendMsg(cli->sock, RESP0002, strlen(RESP0002)))) {
+                cclog(ERROR, "sendMsg error.\n");
+                break;
+            }
+        }
+    } 
 
     free(sendBuf);
     free(recvBuf);
     close(cli->sock);
-    removeClient(cli);
-
+    
     pthread_exit(NULL);
 }
 
@@ -185,13 +195,7 @@ int runServer(char* local_addr, int local_port)
                 break;
             }
         } else {
-            // // no more new connection if room is full.
-            // fprintf(stdout, "Client from [%s:%d] is blocked, room is full [%d / %d]!\n", 
-            //             inet_ntoa(((struct sockaddr*)&client_addr)->sin_addr), 
-            //             ntohs(((struct sockaddr*)&client_addr)->sin_port), 
-            //             clientNum,
-            //             MAX_CLIENT_NUM);
-
+            // No more new connection if room is full.
             ret = sendMsg(connect_d, RESP0001, strlen(RESP0001));
             if (ret < 0) {
                 cclog(ERROR, "sendMsg error!\n");

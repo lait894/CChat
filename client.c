@@ -140,7 +140,7 @@ int term_addChat(char* chat, int cLen)
         cclog(DEBUG, "lines.size=[%d]\n", lines.size);
         screenBottomIndex = lines.size - 1;
         if (lines.size > LINES - 1) {
-            screenTopIndex = screenBottomIndex - (LINES - 1);
+            screenTopIndex = screenBottomIndex - (LINES - 2);
         } else {
             screenTopIndex = 0;
         }
@@ -188,6 +188,37 @@ int runClient(char* remote_addr, int remote_port)
     if (ret) {
         cclog(ERROR, "socket connect error [%d][%s]\n", ret, strerror(ret));
         return -1;
+    }
+
+    int done = FALSE;
+    char cliName[200] = {0};
+    fprintf(stdout, "Please enter you name:");
+    while (!done && isRunning) {
+        // Very dangerous indeed. fix it later
+        memset(cliName, 0, sizeof(cliName));
+        if (fscanf(stdin, "%s", cliName) != EOF) {
+            if ((ret = sendMsg(sock, cliName, strlen(cliName)))) {
+                cclog(ERROR, "sendMsg error, ret=[%d]\n", ret);
+                return -2;
+            } else {
+                cclog(NORMAL, "Send client name OK\n");
+
+                if ((ret = recvMsg(sock, recvBuf, TCP_BUF_SIZE))) {
+                    cclog(ERROR, "Recv error\n");
+                    return -2;
+                } else {
+                    cclog(NORMAL, "Recv ok\n");
+
+                    if (memcmp(recvBuf, RESP0002, strlen(RESP0001)) == 0) {
+                        fprintf(stdout, "Name [%s] is already be used. Please try another one:", cliName);
+                    } else {
+                        done = TRUE;
+                    }
+                }
+            }
+        } else {
+            return -2;
+        }
     }
 
     cclog(DEBUG, "Waiting for client or internet \n");
