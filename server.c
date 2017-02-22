@@ -78,6 +78,7 @@ void* clientHandler(void *p)
         if (used == FALSE) {
             if ((ret = sendMsg(cli->sock, "DONE", 4)) == 0) {
                 strcpy(cli->name, recvBuf);
+                memset(recvBuf, 0, TCP_BUF_SIZE);
                 cclog(NORMAL, "client [%s] joined!\n", cli->name);
 
                 if ((ret = addClient(cli)) == 0) {
@@ -123,6 +124,9 @@ void* clientHandler(void *p)
                 cclog(ERROR, "sendMsg error.\n");
                 break;
             }
+
+            memset(sendBuf, 0, TCP_BUF_SIZE);
+            memset(recvBuf, 0, TCP_BUF_SIZE);
         }
     } 
 

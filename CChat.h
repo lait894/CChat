@@ -38,7 +38,7 @@
 #define TRUE  1
 #define FALSE 0
 
-#define CLIENT_NAME_LEN
+#define CLIENT_NAME_LEN 200
 
 void* runTerm(void* p);
 int cclog(int level, char* filename, int line, char* msg, ...);
