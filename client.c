@@ -73,7 +73,9 @@ int term_getChat(char* buffer, int bSize)
                     cclog(DEBUG, "inputLen=[%d] buffer=[%s]\n", inputLen, buffer);
                     refresh();
                     updateTerm();
-                    break;
+                    
+                    if (inputLen > 0) break;
+                    else continue;
                 } else if (key == KEY_BACKSPACE || key == 127) {
                     cclog(DEBUG, "KEY_BACKSPACE pressed!\n");
                     if (curPos > 1) {
