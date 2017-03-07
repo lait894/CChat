@@ -1,5 +1,5 @@
-#ifndef TCPCLIENT_H
-#define TCPCLIENT_H
+#ifndef CCHAT_H
+#define CCHAT_H
 
 #include <pthread.h>
 #include <sys/socket.h>

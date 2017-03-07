@@ -1,4 +1,4 @@
-#include "CChat.h"
+#include "cchat.h"
 
 int mode;
 int isRunning = 1;
