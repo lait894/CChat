@@ -1,4 +1,4 @@
-#include "CChat.h"
+#include "cchat.h"
 #include <curses.h>
 
 #include "list.h"
@@ -230,7 +230,7 @@ int runClient(char* remote_addr, int remote_port)
     noecho();
     cbreak();
     updateTerm();
-    timeout(300000000000);
+    timeout(3000000);
 
     cclog(NORMAL, "Screen [%d %d]\n", LINES, COLS);
 

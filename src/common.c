@@ -1,4 +1,4 @@
-#include "CChat.h"
+#include "cchat.h"
 
 int sendMsg(int sock, char* msg, int msgLen)
 {

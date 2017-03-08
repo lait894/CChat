@@ -1,8 +1,8 @@
-#include "CChat.h"
+#include "cchat.h"
 #include <stdarg.h>
 
 FILE* logFile = NULL;
-pthread_mutex_t f_lock = PTHREAD_MUTEX_INITIALIZER;  // 日志文件互斥锁
+pthread_mutex_t f_lock = PTHREAD_MUTEX_INITIALIZER;
 
 extern int mode;
 

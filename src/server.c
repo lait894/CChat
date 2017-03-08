@@ -1,4 +1,4 @@
-#include "CChat.h"
+#include "cchat.h"
 #include "list.h"
 
 extern int isRunning;
@@ -160,7 +160,7 @@ int runServer(char* local_addr, int local_port)
         return ret;
     }
 
-    struct sockaddr_storage client_addr;  // 保存客户端详细信息
+    struct sockaddr_storage client_addr;
     unsigned int address_size = sizeof(client_addr);
 
     int connect_d = 0;
