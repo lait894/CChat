@@ -40,7 +40,7 @@
 
 #define CLIENT_NAME_LEN 200
 
-//#define DEBUG_LOG
+#define DEBUG_LOG
 
 void* runTerm(void* p);
 int cclog(int level, char* filename, int line, char* msg, ...);

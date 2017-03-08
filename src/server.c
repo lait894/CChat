@@ -141,10 +141,14 @@ int runServer(char* local_addr, int local_port)
 {
     fprintf(stdout, "Chat server is running on %s:%d\n", local_addr, local_port);
     
-    int ret;
-    int listen_d = socket(PF_INET, SOCK_STREAM, 0);
-    int reuse = -1; 
-    if (setsockopt(listen_d, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(int)) ==  -1) {
+    int ret, connect_d, listen_d, reuse = -1, c;
+
+    if ((listen_d = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+        cclog(ERROR, "socket create error [%s]\n", strerror(listen_d));
+        return -1;
+    }
+
+    if (setsockopt(listen_d, SOL_SOCKET, SO_REUSEADDR, (char*)&reuse, sizeof(int)) == -1) {
         cclog(ERROR, "setsockopt error!\n");
         return -1;
     }
@@ -152,10 +156,11 @@ int runServer(char* local_addr, int local_port)
     struct sockaddr_in name;
     name.sin_family = PF_INET;
     name.sin_port = (in_port_t)htons(local_port);
-    int c = bind(listen_d, (struct sockaddr *)&name, sizeof(name));
-
-    ret = listen(listen_d, TCP_LISTEN_LENGTH);
-    if (ret < 0) {
+    if ((c = bind(listen_d, (struct sockaddr *)&name, sizeof(name)))) {
+        cclog(ERROR, "Tcp bind error [%d], listen_d=[%d], local_port=[%d]\n", c, listen_d, local_port);
+        return c;
+    }
+    if ((ret = listen(listen_d, TCP_LISTEN_LENGTH)) < 0) {
         cclog(ERROR, "Tcp listen error, ret=[%d]\n", ret);
         return ret;
     }
@@ -163,20 +168,15 @@ int runServer(char* local_addr, int local_port)
     struct sockaddr_storage client_addr;
     unsigned int address_size = sizeof(client_addr);
 
-    int connect_d = 0;
-
     pthread_attr_t thread_attr;
-
     if ((ret = pthread_attr_init(&thread_attr)) != 0) {
     	cclog(ERROR, "pthread_attr_init error %d \n", ret);
     	return -1;
     }
-
     if ((ret = pthread_attr_setdetachstate(&thread_attr, PTHREAD_CREATE_DETACHED)) != 0) {
     	cclog(ERROR, "pthread_attr_setdetachstate error %d \n", ret);
     	return -1;
     }
-
     pthread_t tid;
 
     isRunning = TRUE;
@@ -192,18 +192,22 @@ int runServer(char* local_addr, int local_port)
         cclog(DEBUG, "clientNum = [%d]\n", clientNum());
 
         if (clientNum() < MAX_CLIENT_NUM) {
-            Client* tc = malloc(sizeof(Client));
-            tc->sock = connect_d;
-            if ((ret = pthread_create(&tid, &thread_attr, clientHandler, (void*)tc))) {
-                cclog(ERROR, "pthread_create error, ret=[%d]\n", ret);
-                break;
+            ret = sendMsg(connect_d, "ok", 2);
+            if (ret < 0) {
+                cclog(ERROR, "sendMsg error!\n");
+                close(connect_d);
+            } else {
+                Client* tc = malloc(sizeof(Client));
+                tc->sock = connect_d;
+                if ((ret = pthread_create(&tid, &thread_attr, clientHandler, (void*)tc))) {
+                    cclog(ERROR, "pthread_create error, ret=[%d]\n", ret);
+                    break;
+                }                
             }
         } else {
             // No more new connection if room is full.
             ret = sendMsg(connect_d, RESP0001, strlen(RESP0001));
-            if (ret < 0) {
-                cclog(ERROR, "sendMsg error!\n");
-            }
+            close(connect_d);
         }
     }
 

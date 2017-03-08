@@ -6,6 +6,7 @@ int sendMsg(int sock, char* msg, int msgLen)
 
     int c = 0, bytesToSend = 0;
     char* buffer = malloc(TCP_BUF_SIZE);
+    memset(buffer, 0, TCP_BUF_SIZE);
     char* bp = buffer;
 
     memcpy(buffer + 2, msg, msgLen);

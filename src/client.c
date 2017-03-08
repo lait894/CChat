@@ -157,43 +157,54 @@ int term_addChat(char* chat, int cLen)
     return 0;
 }
 
-int runClient(char* remote_addr, int remote_port)
+int socketConnect(char* remote_addr, int remote_port)
 {
-    puts("Chat client is running.");
-    
-    int ret = 0;
+    int ret = 0, sock;
     char sport[6] = {0};
-    char ch;
-    int  ic;
-    sprintf(sport, "%d", remote_port);
-    char* sendBuf = malloc(TCP_BUF_SIZE);
-    char* recvBuf = malloc(TCP_BUF_SIZE);
-
     struct addrinfo *info = NULL;
     struct addrinfo hints;
+
+    sprintf(sport, "%d", remote_port);
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = PF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
-    ret = getaddrinfo(remote_addr, sport, &hints, &info);
-    if (ret) {
+    if ((ret = getaddrinfo(remote_addr, sport, &hints, &info))) {
         cclog(ERROR, "getaddrinfo error:%s", gai_strerror(ret));
         return -1;  
     }
 
-    int sock = socket(info->ai_family, info->ai_socktype, 0);
-    if (sock < 0) {
+    if ((sock = socket(info->ai_family, info->ai_socktype, 0)) < 0) {
         cclog(ERROR, "socket create error [%s]\n", strerror(sock));
-        return -1;  
+        return sock;
     }
     
-    ret = connect(sock, info->ai_addr, info->ai_addrlen);
-    if (ret) {
+    if ((ret = connect(sock, info->ai_addr, info->ai_addrlen))) {
         cclog(ERROR, "socket connect error [%d][%s]\n", ret, strerror(ret));
         return -1;
     }
 
-    int done = FALSE;
+    return sock;
+}
+
+int enterRoom(int sock, char* sendBuf, char* recvBuf)
+{
+    int done = FALSE, ret = 0;
     char cliName[200] = {0};
+
+    //Get server confirm.
+    if ((ret = recvMsg(sock, recvBuf, TCP_BUF_SIZE))) {
+        cclog(ERROR, "Get server confirm error.\n");
+        return -2;
+    } else {
+        if (memcmp(recvBuf, RESP0001, strlen(RESP0001)) == 0) {
+            fprintf(stdout, "Room is full, please try again later.\n");
+            return -1;
+        } else {
+            cclog(NORMAL, "Get server confirm ok\n");
+        }
+    }
+
+    //Set client name.
     fprintf(stdout, "Please enter you name:");
     while (!done && isRunning) {
         // Very dangerous indeed. fix it later
@@ -211,8 +222,8 @@ int runClient(char* remote_addr, int remote_port)
                 } else {
                     cclog(NORMAL, "Recv ok\n");
 
-                    if (memcmp(recvBuf, RESP0002, strlen(RESP0001)) == 0) {
-                        fprintf(stdout, "Name [%s] is already be used. Please try another one:", cliName);
+                    if (memcmp(recvBuf, RESP0002, strlen(RESP0002)) == 0) {
+                        fprintf(stdout, "Name [%s] is already be used, please try another one:", cliName);
                     } else {
                         done = TRUE;
                     }
@@ -223,69 +234,77 @@ int runClient(char* remote_addr, int remote_port)
         }
     }
 
-    cclog(DEBUG, "Waiting for client or internet \n");
+    return 0;
+}
 
-    initscr();
-    keypad(stdscr, TRUE);
-    noecho();
-    cbreak();
-    updateTerm();
-    timeout(3000000);
-
-    cclog(NORMAL, "Screen [%d %d]\n", LINES, COLS);
-
+int runClient(char* remote_addr, int remote_port)
+{
+    puts("Chat client is running.");
+    
+    int ret, sRet, maxFd;
     fd_set rSet;
     struct timeval tv;
-    int sRet = 0;
-    int maxFd = 0;
 
-    while(isRunning) {
-        FD_ZERO(&rSet);
+    int sock = socketConnect(remote_addr, remote_port);
+    if (sock <= 0) {
+        return -1;
+    }
 
-        FD_SET(STDIN_FILENO, &rSet);
-        FD_SET(sock, &rSet);
+    char* sendBuf = malloc(TCP_BUF_SIZE);
+    char* recvBuf = malloc(TCP_BUF_SIZE);
 
-        maxFd = (STDIN_FILENO > sock ? STDIN_FILENO : sock) + 1;            
-        sRet = select(maxFd, &rSet, NULL, NULL, &tv);
-        if (sRet == -1) {
-            cclog(ERROR, "select error, errno=[%d][%s]\n", errno, strerror(errno));
-            break;
-        } else if (sRet == 0) {
-            continue;
-        } else {
-            if (FD_ISSET(STDIN_FILENO, &rSet)) {
-                ret = term_getChat(sendBuf, TCP_BUF_SIZE);
-                if (ret <= 0) {
-                    cclog(ERROR, "term_getChat error, ret=[%d]\n", ret);
-                    break;
-                } else {
-                    if ((ret = sendMsg(sock, sendBuf, strlen(sendBuf)))) {
-                        cclog(ERROR, "sendMsg error, ret=[%d]\n", ret);
+    if (enterRoom(sock, sendBuf, recvBuf) == 0) {
+        initscr();
+        keypad(stdscr, TRUE);
+        noecho();
+        cbreak();
+        updateTerm();
+        timeout(3000000);
+        cclog(NORMAL, "Screen [%d %d]\n", LINES, COLS);
+
+        while(isRunning) {
+            memset(sendBuf, 0, TCP_BUF_SIZE);
+            memset(recvBuf, 0, TCP_BUF_SIZE);
+
+            FD_ZERO(&rSet);
+            FD_SET(STDIN_FILENO, &rSet);
+            FD_SET(sock, &rSet);
+
+            maxFd = (STDIN_FILENO > sock ? STDIN_FILENO : sock) + 1;            
+            sRet = select(maxFd, &rSet, NULL, NULL, &tv);
+            if (sRet == -1) {
+                cclog(ERROR, "select error, errno=[%d][%s]\n", errno, strerror(errno));
+                break;
+            } else if (sRet == 0) {
+                continue;
+            } else {
+                if (FD_ISSET(STDIN_FILENO, &rSet)) {
+                    ret = term_getChat(sendBuf, TCP_BUF_SIZE);
+                    if (ret <= 0) {
+                        cclog(ERROR, "term_getChat error, ret=[%d]\n", ret);
                         break;
                     } else {
-                        cclog(NORMAL, "send ok\n");
+                        if ((ret = sendMsg(sock, sendBuf, strlen(sendBuf)))) {
+                            cclog(ERROR, "sendMsg error, ret=[%d]\n", ret);
+                            break;
+                        } else {
+                            cclog(NORMAL, "send ok\n");
+                        }
                     }
-                }
-            } 
+                } 
 
-            if (FD_ISSET(sock, &rSet)) {
-                if ((ret = recvMsg(sock, recvBuf, TCP_BUF_SIZE))) {
-                    cclog(ERROR, "recvMsg error\n");
-                    break;
-                } else {
-                    cclog(NORMAL, "recvMsg ok\n");
-
-                    if (memcmp(recvBuf, RESP0001, strlen(RESP0001)) == 0) {
-                        fprintf(stdout, "Room is full, please try again later.");
+                if (FD_ISSET(sock, &rSet)) {
+                    if ((ret = recvMsg(sock, recvBuf, TCP_BUF_SIZE))) {
+                        cclog(ERROR, "recvMsg error\n");
                         break;
-                    }
+                    } else {
+                        cclog(NORMAL, "recvMsg ok\n");
 
-                    term_addChat(recvBuf, strlen(recvBuf));
-                }
-            }            
+                        term_addChat(recvBuf, strlen(recvBuf));
+                    }
+                }            
+            }
         }
-        memset(sendBuf, 0, TCP_BUF_SIZE);
-        memset(recvBuf, 0, TCP_BUF_SIZE);
     }
 
     free(sendBuf);
