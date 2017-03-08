@@ -33,9 +33,16 @@
 *.su
 
 # BIN
-CChat
+cchat
 
 # LOG
 *.err
 *.log
 *.swp
+
+
+.deps
+
+src/log
+src/log/*
+

@@ -8,6 +8,8 @@ extern int mode;
 
 int cclog(int level, char* filename, int line, char* msg, ...)
 {
+#ifdef DEBUG_LOG
+    
     char logMsg[4096] = {0};
     char logFileName[100] = {0};
     struct tm *tm_ptr;
@@ -52,5 +54,8 @@ int cclog(int level, char* filename, int line, char* msg, ...)
 
     va_end(va);
 
+#endif
+
     return 0;
+
 }
