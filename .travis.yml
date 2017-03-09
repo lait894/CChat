@@ -7,5 +7,6 @@ install:
  - sudo apt-get install -y libncurses5-dev
 
 script: 
+ - automake --add-missing
  - ls -al
  - ./configure && make
