@@ -107,7 +107,7 @@ void* clientHandler(void *p)
 {
     cclog(DEBUG, "thread is running!\n");
 
-    int ret = 0, used = FALSE; 
+    int ret = 0, used = FALSE, i; 
     Client *cli = (Client *)p, *tc = NULL;
 
     char *sendBuf = malloc(TCP_BUF_SIZE);
@@ -123,7 +123,7 @@ void* clientHandler(void *p)
             if ((ret = recvMsg(cli->sock, recvBuf, TCP_BUF_SIZE)) == 0) {
                 memset(sendBuf, 0, TCP_BUF_SIZE);
                 sprintf(sendBuf, "%s:%s", cli->name, recvBuf);
-                for (int i = 0; i < clientNum(); i++) {
+                for (i = 0; i < clientNum(); i++) {
                     if ((tc = (Client *)getClient(i))) {
                         if ((ret = sendMsg(tc->sock, sendBuf, strlen(sendBuf)))) {
                             cclog(ERROR, "sendBuf to sock [%d] error\n", tc->sock);
