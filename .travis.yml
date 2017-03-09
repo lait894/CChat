@@ -5,8 +5,11 @@ compiler: gcc
 install:
  - sudo apt-get -qq update
  - sudo apt-get install -y libncurses5-dev
+ - sudo apt-get install -y automake autoconf
 
-script: 
+script:
+ - aclocal
+ - autoconf
  - automake --add-missing
  - ls -al
  - ./configure && make
