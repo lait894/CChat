@@ -56,13 +56,13 @@ int clientNum()
 
 int acceptAndCheckClient(Client* cli, char* sendBuf, char* recvBuf)
 {
-    int ret, used = FALSE;
+    int ret, used = FALSE, i;
     Client *pc = NULL;
 
     while ((ret = recvMsg(cli->sock, recvBuf, TCP_BUF_SIZE)) == 0 && isRunning) {
         used = FALSE;
 
-        for (int i = 0; i < clients.size; i++) {
+        for (i = 0; i < clients.size; i++) {
             pc = (Client *)listGet(&clients, i);
             if (memcmp(pc->name, recvBuf, strlen(recvBuf)) == 0) {
                 used = TRUE;

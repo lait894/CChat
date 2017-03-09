@@ -8,8 +8,8 @@ void* listGet(List* list, int index)
 	if (index > list->size) return NULL;
 
 	Node *curr = list->head;
-
-	for (int i = 0; i < index; i++) {
+	int i;
+	for (i = 0; i < index; i++) {
 		curr = curr->next;
 	}
 

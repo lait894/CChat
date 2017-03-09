@@ -14,11 +14,11 @@ int screenBottomIndex = 0;
 
 int printChats()
 {
-    int y = 0;
+    int y = 0, i;
     char *line = NULL;
 
     if (lines.size > 0) {
-        for (int i = screenTopIndex; i <= screenBottomIndex; i++) {
+        for (i = screenTopIndex; i <= screenBottomIndex; i++) {
             move(y, 0);
             line = listGet(&lines, i);
             if (!line) {
