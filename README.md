@@ -13,12 +13,12 @@ make install
   
   
 ## Windows
-comming soon ....  
+comming soon :)  
 
 
 #How to use
 ## Server
-cchat -s -h IP -p PORT  
+cchat -s -p LOCAL_PORT  
 
 ## Client
-cchat -c -h IP -p PORT  
+cchat -c -h REMOTE_IP -p REMOTE_PORT  

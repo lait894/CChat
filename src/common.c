@@ -3,6 +3,7 @@
 int sendMsg(int sock, char* msg, int msgLen)
 {
     if (msg == NULL || sock < 0 || msgLen > TCP_BUF_SIZE - 2) return -1;
+    cclog(ERROR, "sendMsg msg=[%d][%s]\n", msgLen, msg);
 
     int c = 0, bytesToSend = 0;
     char* buffer = malloc(TCP_BUF_SIZE);
@@ -41,7 +42,7 @@ int recvMsg(int sock, char* recvBuf, int recvBufLen)
 
     char slen[2] = {0};
 
-    //memset(recvBuf, 0, recvBufLen);
+    memset(recvBuf, 0, recvBufLen);
 
     c = recv(sock, slen, 2, 0);
     if (c < 0) {
@@ -74,8 +75,8 @@ int recvMsg(int sock, char* recvBuf, int recvBufLen)
             cclog(NORMAL, "Tcp close.\n");
             return -2;
         }
-        bs += c;
         cclog(NORMAL, "recv %d byte [%s]\n", c, bs);
+        bs += c;
     } while((byteToRecv -= c) > 0);
 
     cclog(NORMAL, "Tcp recv ok. buffer[%s]\n", recvBuf);

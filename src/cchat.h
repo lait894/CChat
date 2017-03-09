@@ -46,7 +46,7 @@ void* runTerm(void* p);
 int cclog(int level, char* filename, int line, char* msg, ...);
 int sendMsg(int sock, char* msg, int msgLen);
 int recvMsg(int sock, char* recvBuf, int recvBufLen);
-int runServer(char* local_addr, int local_port);
+int runServer(int local_port);
 int runClient(char* remote_addr, int remote_port);
 
 #endif

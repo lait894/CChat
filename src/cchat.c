@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if (strlen(port) == 0 || strlen(addr) == 0) {
+    if (strlen(port) == 0 || (mode != 1 && strlen(addr) == 0)) {
         cclog(ERROR, "Input error\n");
         on_cc_exit("Input error");
         return -1;
@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
     cclog(DEBUG, "mode=[%i] host[%s] port[%s]\n", mode, addr, port);
 
     if (mode) {
-        runServer(addr, atoi(port));
+        runServer(atoi(port));
     } else {
         runClient(addr, atoi(port));
     }
