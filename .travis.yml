@@ -7,4 +7,4 @@ install:
  - sudo apt-get install -y libncurses5-dev
 
 script: 
-  - $CC --version
+ - ./configure && make
