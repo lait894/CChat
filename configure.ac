@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.69])
+AC_PREREQ([2.68])
 AC_INIT([cchat], [1.0], [laitaur@foxmail.com])
 AM_INIT_AUTOMAKE(cchat, 1.0, laitaur@foxmail.com)
 AC_CONFIG_SRCDIR([src/cchat.c])
