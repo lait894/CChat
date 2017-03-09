@@ -46,7 +46,7 @@ void updateTerm()
 
 int term_getChat(char* buffer, int bSize)
 {
-    int curPos = 1, inputLen = 0;
+    int curPos = 1, inputLen = 0, i;
     int key;
     int y, x;
     while(inputLen < bSize) {
@@ -61,7 +61,7 @@ int term_getChat(char* buffer, int bSize)
                     addch(key);    
                     curPos++;
                 } else {
-                    for (int i = ++inputLen; i > curPos; i--) {
+                    for (i = ++inputLen; i > curPos; i--) {
                         buffer[i] = buffer[i - 1];
                     }
                     buffer[curPos++] = key;
@@ -79,7 +79,7 @@ int term_getChat(char* buffer, int bSize)
                 } else if (key == KEY_BACKSPACE || key == 127) {
                     cclog(DEBUG, "KEY_BACKSPACE pressed!\n");
                     if (curPos > 1) {
-                        for (int i = curPos - 2; i < inputLen - 1; i++) {
+                        for (i = curPos - 2; i < inputLen - 1; i++) {
                             buffer[i] = buffer[i + 1]; 
                         }
                         buffer[--inputLen] = '\0';
