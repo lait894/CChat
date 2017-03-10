@@ -31,3 +31,18 @@
 # Debug files
 *.dSYM/
 *.su
+
+# BIN
+cchat
+
+# LOG
+*.err
+*.log
+*.swp
+
+
+.deps
+
+src/log
+src/log/*
+

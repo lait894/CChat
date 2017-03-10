@@ -1,0 +1,17 @@
+language: c
+
+compiler: gcc
+
+before-install:
+
+install:
+ - sudo apt-get -qq update
+ - sudo apt-get install -y libncurses5-dev
+ - sudo apt-get install -y automake autoconf
+
+script:
+ - aclocal
+ - autoconf
+ - automake --add-missing
+ - ls -al
+ - ./configure && make
