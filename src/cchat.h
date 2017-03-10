@@ -20,7 +20,7 @@
 #define DEFAULT_ADDR  "127.0.0.1"
 #define DEFAULT_PORT  "3333"
 #define LOG_FILE_PATH "./log"
-#define LOG_FILE_NAME "CChat"
+#define LOG_FILE_NAME "cchat"
 
 #define DEBUG  1, __FILE__, __LINE__
 #define WARN   2, __FILE__, __LINE__
@@ -40,7 +40,7 @@
 
 #define CLIENT_NAME_LEN 200
 
-#define DEBUG_LOG
+//#define DEBUG_LOG
 
 void* runTerm(void* p);
 int cclog(int level, char* filename, int line, char* msg, ...);
